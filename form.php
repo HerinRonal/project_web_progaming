@@ -8,26 +8,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $query = "SELECT * FROM admin WHERE username = '$username'";
-    $result = mysqli_query($conn, $query);
+    $stmt = $conn->prepare("SELECT * FROM anggota WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if (mysqli_num_rows($result) === 1) {
-        $data = mysqli_fetch_assoc($result);
+    if ($result->num_rows === 1) {
+        $data = $result->fetch_assoc();
 
-        // Kalau password belum di-hash, pakai ===
+        // cek password biasa
         if ($password === $data['password']) {
-            $_SESSION['admin_username'] = $data['username'];
-            header("Location: admin.html");
-            exit();
+            $_SESSION['username'] = $data['username'];
+            $_SESSION['role'] = $data['role'];
+
+            // redirect berdasarkan role
+            if ($data['role'] === 'admin'){
+                header('Location: admin.html');
+            } else {
+                header('Location: viewer.html');
+            }
+            exit;
         } else {
-            $error = "Password salah!";
-        }
+            $error = "password salah!";
+        } 
     } else {
-        $error = "Username tidak ditemukan!";
+        $error = "username tidak ditemukan!";
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html>
